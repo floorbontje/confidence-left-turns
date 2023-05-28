@@ -1,5 +1,0 @@
-numpy
-jupyter
-pandas
-seaborn
-pyddm
