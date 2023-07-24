@@ -197,6 +197,7 @@ lme_RMSD=fitlme(table_all, 'RMSD ~ conf*decision+ (1|ID)','CheckHessian', true)
 
 %% Figure - mean values 
 
+
 [conf_sort_go, I_sort_go]=sort(table_all.conf(pos_go));
 [conf_sort_wait, I_sort_wait]=sort(table_all.conf(pos_wait));
 int_go = round(length(conf_sort_go)/3)*[1,2]; 
@@ -259,18 +260,146 @@ for i = 1:(max_length+1)
     end 
 end 
 
+t_pl_lg =mean(t_low_go','omitnan'); 
+cr_lg = mean(M_low_go','omitnan'); 
+pos_pl_lg= find(~isnan(t_pl_lg)); 
+
+t_pl_mg =mean(t_mean_go','omitnan'); 
+cr_mg = mean(M_mean_go','omitnan'); 
+pos_pl_mg= find(~isnan(t_pl_mg)); 
+
+t_pl_hg =mean(t_high_go','omitnan'); 
+cr_hg = mean(M_high_go','omitnan'); 
+pos_pl_hg = find(~isnan(t_pl_hg)); 
+
+t_pl_lw =mean(t_low_wait','omitnan'); 
+cr_lw = mean(M_low_wait','omitnan'); 
+pos_pl_lw= find(~isnan(t_pl_lw)); 
+
+t_pl_mw =mean(t_mean_wait','omitnan'); 
+cr_mw = mean(M_mean_wait','omitnan'); 
+pos_pl_mw= find(~isnan(t_pl_mw)); 
+
+t_pl_hw =mean(t_high_wait','omitnan'); 
+cr_hw = mean(M_high_wait','omitnan'); 
+pos_pl_hw = find(~isnan(t_pl_hw));
+
+close all
+
+mean_fig_all = figure; 
+subplot(1,2,1)
+hold on; 
+fill([t_pl_lg(pos_pl_lg) fliplr(t_pl_lg(pos_pl_lg))], [(cr_lg(pos_pl_lg)-CI_low_go(pos_pl_lg))  fliplr((cr_lg(pos_pl_lg)+CI_low_go(pos_pl_lg)))],'r','FaceAlpha',0.15,'EdgeColor','r')
+fill([t_pl_mg(pos_pl_mg) fliplr(t_pl_mg(pos_pl_mg))], [(cr_mg(pos_pl_mg)-CI_mean_go(pos_pl_mg))  fliplr((cr_mg(pos_pl_mg)+CI_mean_go(pos_pl_mg)))],[0.2010 0.7450 0.9330],'FaceAlpha',0.2,'EdgeColor',[0.2010 0.7450 0.9330])
+fill([t_pl_hg(pos_pl_hg) fliplr(t_pl_hg(pos_pl_hg))], [(cr_hg(pos_pl_hg)-CI_high_go(pos_pl_hg))  fliplr((cr_hg(pos_pl_hg)+CI_high_go(pos_pl_hg)))],'y','FaceAlpha',0.2,'EdgeColor','#fcef21')
+plot(t_pl_lg,cr_lg,'-r','LineWidth', 2);
+plot(t_pl_mg,cr_mg,'-','color',[0.2510 0.7450 0.9330],'LineWidth', 2);
+plot(t_pl_hg,cr_hg,'-','color',"#fcef21",'LineWidth', 2);
+
+ax = gca;          ax.FontSize = 12;
+title('Go', 'FontSize', 13); box off
+ylabel([text unit])
+xlabel('time, s')
+xlim(t_lim_go)
+ylim(y_lim_dynamic)
+
+
+subplot(1,2,2)
+hold on; 
+fill([t_pl_lw(pos_pl_lw) fliplr(t_pl_lw(pos_pl_lw))], [(cr_lw(pos_pl_lw)-CI_low_wait(pos_pl_lw))  fliplr((cr_lw(pos_pl_lw)+CI_low_wait(pos_pl_lw)))],'r','FaceAlpha',0.15,'EdgeColor','r')
+fill([t_pl_mw(pos_pl_mw) fliplr(t_pl_mw(pos_pl_mw))], [(cr_mw(pos_pl_mw)-CI_mean_wait(pos_pl_mw))  fliplr((cr_mw(pos_pl_mw)+CI_mean_wait(pos_pl_mw)))],[0.2010 0.7450 0.9330],'FaceAlpha',0.2,'EdgeColor',[0.2010 0.7450 0.9330])
+fill([t_pl_hw(pos_pl_hw) fliplr(t_pl_hw(pos_pl_hw))], [(cr_hw(pos_pl_hw)-CI_high_wait(pos_pl_hw))  fliplr((cr_hw(pos_pl_hw)+CI_high_wait(pos_pl_hw)))],'y','FaceAlpha',0.2,'EdgeColor','#fcf14c')
+p1 = plot(t_pl_lw,cr_lw,'-r','LineWidth', 2);
+p2 = plot(t_pl_mw,cr_mw,'-','color',[0.2510 0.7450 0.9330],'LineWidth', 2);
+p3 = plot(t_pl_hw,cr_hw,'-','color',"#fcef21",'LineWidth', 2);
+legend([p1,p2,p3],{'Lowest conf.', 'Intermediate conf.', 'Highest conf.'}, 'Fontsize', 12)
+legend boxoff; box off
+ax = gca;          ax.FontSize = 12;
+title('Wait', 'FontSize', 13); box off
+ylabel([text unit])
+xlabel('time, s')
+xlim(t_lim_go)
+ylim(y_lim_dynamic)
+
+
+mean_fig_go = figure; 
+subplot(1,3,1)
+hold on; 
+fill([t_pl_lg(pos_pl_lg) fliplr(t_pl_lg(pos_pl_lg))], [(cr_lg(pos_pl_lg)-CI_low_go(pos_pl_lg))  fliplr((cr_lg(pos_pl_lg)+CI_low_go(pos_pl_lg)))],'r','FaceAlpha',0.15,'EdgeColor','r')
+plot(t_pl_lg,cr_lg,'-r','LineWidth', 2);
+ax = gca;          ax.FontSize = 11;
+title('Lowest conf.', 'FontSize', 12); box off
+ylabel([text unit])
+xlabel('time, s')
+xlim(t_lim_go)
+ylim(y_lim_dynamic)
+
+subplot(1,3,2)
+hold on;
+fill([t_pl_mg(pos_pl_mg) fliplr(t_pl_mg(pos_pl_mg))], [(cr_mg(pos_pl_mg)-CI_mean_go(pos_pl_mg))  fliplr((cr_mg(pos_pl_mg)+CI_mean_go(pos_pl_mg)))],[0.2010 0.7450 0.9330],'FaceAlpha',0.2,'EdgeColor',[0.2010 0.7450 0.9330])
+plot(t_pl_mg,cr_mg,'-','color',[0.2510 0.7450 0.9330],'LineWidth', 2);
+ax = gca;          ax.FontSize = 11;
+title('Intermediate conf.', 'FontSize', 12); box off
+ylabel([text unit])
+xlabel('time, s')
+xlim(t_lim_go)
+ylim(y_lim_dynamic)
+
+subplot(1,3,3)
+hold on;
+fill([t_pl_hg(pos_pl_hg) fliplr(t_pl_hg(pos_pl_hg))], [(cr_hg(pos_pl_hg)-CI_high_go(pos_pl_hg))  fliplr((cr_hg(pos_pl_hg)+CI_high_go(pos_pl_hg)))],'y','FaceAlpha',0.2,'EdgeColor','#fcef21')
+plot(t_pl_hg,cr_hg,'-','color',"#fcef21",'LineWidth', 2);
+ax = gca;          ax.FontSize = 11;
+title('Highest conf.', 'FontSize', 12); box off
+ylabel([text unit])
+xlabel('time, s')
+xlim(t_lim_go)
+ylim(y_lim_dynamic)
+sgtitle('Go Decisions') 
+
+
+mean_fig_wait = figure; 
+subplot(1,3,1)
+hold on; 
+fill([t_pl_lw(pos_pl_lw) fliplr(t_pl_lw(pos_pl_lw))], [(cr_lw(pos_pl_lw)-CI_low_wait(pos_pl_lw))  fliplr((cr_lw(pos_pl_lw)+CI_low_wait(pos_pl_lw)))],'r','FaceAlpha',0.15,'EdgeColor','r')
+plot(t_pl_lw,cr_lw,'-r','LineWidth', 2);
+ax = gca;          ax.FontSize = 11;
+title('Lowest conf.', 'FontSize', 12); box off
+ylabel([text unit])
+xlabel('time, s')
+xlim(t_lim_wait)
+ylim(y_lim_dynamic)
+
+subplot(1,3,2)
+hold on;
+fill([t_pl_mw(pos_pl_mw) fliplr(t_pl_mw(pos_pl_mw))], [(cr_mw(pos_pl_mw)-CI_mean_wait(pos_pl_mw))  fliplr((cr_mw(pos_pl_mw)+CI_mean_wait(pos_pl_mw)))],[0.2010 0.7450 0.9330],'FaceAlpha',0.2,'EdgeColor',[0.2010 0.7450 0.9330])
+plot(t_pl_mw,cr_mw,'-','color',[0.2510 0.7450 0.9330],'LineWidth', 2);
+ax = gca;          ax.FontSize = 11;
+title('Intermediate conf.', 'FontSize', 12); box off
+ylabel([text unit])
+xlabel('time, s')
+xlim(t_lim_wait)
+ylim(y_lim_dynamic)
+
+subplot(1,3,3)
+hold on;
+fill([t_pl_hw(pos_pl_hw) fliplr(t_pl_hw(pos_pl_hw))], [(cr_hw(pos_pl_hw)-CI_high_wait(pos_pl_hw))  fliplr((cr_hw(pos_pl_hw)+CI_high_wait(pos_pl_hw)))],'y','FaceAlpha',0.2,'EdgeColor','#fcef21')
+plot(t_pl_hw,cr_hw,'-','color',"#fcef21",'LineWidth', 2);
+ax = gca;          ax.FontSize = 11;
+title('Highest conf.', 'FontSize', 12); box off
+ylabel([text unit])
+xlabel('time, s')
+xlim(t_lim_wait)
+ylim(y_lim_dynamic)
+sgtitle('Wait Decisions') 
+
+
 mean_fig =figure; 
 subplot(1,2,1)
 plot(mean(t_low_go','omitnan'),mean(M_low_go','omitnan'),'-','color',[0.8,0.8,0.8],'LineWidth', 1.3);
 hold on; 
 plot(mean(t_mean_go','omitnan'),mean(M_mean_go','omitnan'),'-','color',[0.6,0.6,0.6],'LineWidth', 1.2);
 plot(mean(t_high_go','omitnan'),mean(M_high_go','omitnan'),'-k','LineWidth', 1.2);
-% plot(mean(t_low_go','omitnan'), mean(M_low_go','omitnan') + CI_low_go,'--','color',[0.8,0.8,0.8],'LineWidth', 1.3);
-% plot(mean(t_mean_go','omitnan'),mean(M_mean_go','omitnan')+ CI_mean_go,'-','color',[0.6,0.6,0.6],'LineWidth', 1.2);
-% plot(mean(t_high_go','omitnan'),mean(M_high_go','omitnan') + CI_high_go,'-k','LineWidth', 1.2);
-% plot(mean(t_low_go','omitnan'), mean(M_low_go','omitnan') - CI_low_go,'--','color',[0.8,0.8,0.8],'LineWidth', 1.3);
-% plot(mean(t_mean_go','omitnan'),mean(M_mean_go','omitnan')- CI_mean_go,'--','color',[0.6,0.6,0.6],'LineWidth', 1.2);
-% plot(mean(t_high_go','omitnan'),mean(M_high_go','omitnan') - CI_high_go,'--k','LineWidth', 1.2);
 ax = gca;          ax.FontSize = 13;
 title('Go', 'FontSize', 14); box off
 ylabel([text unit])
@@ -296,8 +425,8 @@ ylim(y_lim_dynamic)
 
 
 %% Output 
-fname_output = '.\Data analysis\general data analysis\action dynamics'; 
-fname_figure = '.\Data analysis\figures\Action Dynamics';
+fname_output = '.\Data analysis2\general data analysis\action dynamics'; 
+fname_figure = '.\Data analysis2\figures\Action Dynamics';
 
 if time_moment == 1
     txt_time = 'Throttle'; 
@@ -323,5 +452,10 @@ writetable(table_decision_RMSD, fullfile(fname_output, ['Ftest DM RMSD ', text1,
 % figures
 saveas(mean_fig, fullfile(fname_figure, ['Mean ', text1, 'during turn', condition, txt_time, '.jpg']))
 saveas(mean_fig, fullfile(fname_figure, ['Mean ', text1, 'during turn', condition, txt_time, '.pdf']))
-
+saveas(mean_fig_all, fullfile(fname_figure, ['Mean all ', text1, 'during turn', condition, txt_time, '.jpg']))
+saveas(mean_fig_all, fullfile(fname_figure, ['Mean all ', text1, 'during turn', condition, txt_time, '.pdf']))
+saveas(mean_fig_go, fullfile(fname_figure, ['Mean go ', text1, 'during turn', condition, txt_time, '.jpg']))
+saveas(mean_fig_go, fullfile(fname_figure, ['Mean go ', text1, 'during turn', condition, txt_time, '.pdf']))
+saveas(mean_fig_wait, fullfile(fname_figure, ['Mean wait ', text1, 'during turn', condition, txt_time, '.jpg']))
+saveas(mean_fig_wait, fullfile(fname_figure, ['Mean wait ', text1, 'during turn', condition, txt_time, '.pdf']))
 
