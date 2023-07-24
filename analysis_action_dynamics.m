@@ -425,8 +425,8 @@ ylim(y_lim_dynamic)
 
 
 %% Output 
-fname_output = '.\Data analysis2\general data analysis\action dynamics'; 
-fname_figure = '.\Data analysis2\figures\Action Dynamics';
+fname_output = '.\Data analysis\general data analysis\action dynamics'; 
+fname_figure = '.\Data analysis\figures\Action Dynamics';
 
 if time_moment == 1
     txt_time = 'Throttle'; 
