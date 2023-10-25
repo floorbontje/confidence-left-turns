@@ -134,9 +134,9 @@ prs_thr_before_wait_RT = length(find(delta_time_thr_RT(pos_wait_all) <0))/length
 close all
 clc
 % Decision behaviour 
-lme_all_go_prs=fitlme(table_all, 'prs_decision ~ tta + dist + (1|ID)','CheckHessian', true);
+glme_all_go_prs=fitglme(table_all, 'prs_decision ~ tta + dist + (1|ID)','CheckHessian', true);
 [random_effect_inter_decision,~] = ...
-    function_lme_results ('Probability of go decision', lme_all_go_prs, pos, [], [Go_c_pr.c1,Go_c_pr.c2,Go_c_pr.c3,Go_c_pr.c4], zeros(1,4), ...
+    function_lme_results ('Probability of go decision', glme_all_go_prs, pos, [], [Go_c_pr.c1,Go_c_pr.c2,Go_c_pr.c3,Go_c_pr.c4], zeros(1,4), ...
     [],[]); 
 
 % Response time
