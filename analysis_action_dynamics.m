@@ -318,7 +318,7 @@ ax = gca;          ax.FontSize = 12;
 title('Wait', 'FontSize', 13); box off
 ylabel([text unit])
 xlabel('time, s')
-xlim(t_lim_go)
+xlim(t_lim_wait)
 ylim(y_lim_dynamic)
 
 
