@@ -225,7 +225,7 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
         xlabel('tta [sec]','FontSize', 14);         
         ylabel('Confidence','FontSize', 14) 
         title('Go','FontSize', 16)
-        ylim([1,5]); xlim([5.3;6.7])
+        ylim([1,5]); xlim([5.3;6.7]); xticks([5.5, 6.5])
         legend('model 70m', 'model 90m', 'data 70m', 'data 90m', 'Location', 'southeast', 'Fontsize', 12)
         
 
@@ -241,7 +241,7 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
         xlabel('tta [sec]','FontSize', 14)
         ylabel('Confidence','FontSize', 14) 
         title('Wait','FontSize', 16)
-        ylim([1,5]); xlim([5.3;6.7])
+        ylim([1,5]); xlim([5.3;6.7]); xticks([5.5, 6.5])
         dim = [.6 .1 .1 .1];
         sgtitle(txt, 'FontSize', 18) 
        
@@ -253,7 +253,7 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
         hold on; grid on 
         plot(tta, DV_mean_loss_go(3:4), '.-r', 'MarkerSize',15)
         title ('Go')
-        xlim([5.3 6.7])
+        xlim([5.3 6.7]); xticks([5.5, 6.5])
         xlabel('Time-to-arrival (TTA), s')
         ylabel('V_c')
 
@@ -263,7 +263,7 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
         plot(tta, DV_mean_loss_wait(3:4), '.-r', 'MarkerSize',15)
         title ('Wait')
         xlabel('Time-to-arrival (TTA), s')
-        xlim([5.3 6.7])
+        xlim([5.3 6.7]); xticks([5.5, 6.5])
         ylabel('V_c')
 
         subplot(2,2,3)
@@ -273,7 +273,7 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
         legend('70 m', '90m', 'Location', 'Southwest')
         title ('Go')
         xlabel('Time-to-arrival (TTA), s')
-        ylim([1,5]); xlim([5.3 6.7])
+        ylim([1,5]); xlim([5.3 6.7]); xticks([5.5, 6.5])
         ylabel('Confidence') 
 
         subplot(2,2,4)
@@ -283,7 +283,7 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
         title ('Wait decisions')
         xlabel('Time-to-arrival (TTA), s')
         ylabel('Confidence')
-        ylim([1,5]); xlim([5.3 6.7])
+        ylim([1,5]); xlim([5.3 6.7]); xticks([5.5, 6.5])
         sgtitle(txt)
 
 
