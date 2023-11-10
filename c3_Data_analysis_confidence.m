@@ -85,7 +85,7 @@ Mean_RT_go=mean(table_all.reaction_time(table_all.prs_decision == 1));
 Mean_RT_wait=mean(table_all.reaction_time(table_all.prs_decision == 0)); 
 std_RT_go=std(table_all.reaction_time(table_all.prs_decision == 1)); 
 std_RT_wait=std(table_all.reaction_time(table_all.prs_decision == 0)); 
-
+%%
 
 % Positions in table, mean values & CIs 
 con = ['c1'; 'c2'; 'c3'; 'c4'];
@@ -112,14 +112,27 @@ for i = 1: 4
     CI_mean_RT_mean_c_wait(i) = 1.96*std(table_all.reaction_time(pos_wait.(con(i,:))))/sqrt(length(pos_wait.(con(i,:)))); 
     
     for indiv = 1: length(ID)
-        RT_mean_go_C(indiv,i)=mean(table_all.reaction_time(pos_go.(con(i,:))(table_all.ID(pos_go.(con(i,:)))==ID(indiv))));
-        RT_mean_wait_C(indiv,i)=mean(table_all.reaction_time(pos_wait.(con(i,:))(table_all.ID(pos_wait.(con(i,:)))==ID(indiv))));
+        conf_mean_go_C(indiv,i)=mean(table_all.conf(pos_go.(con(i,:))(table_all.ID(pos_go.(con(i,:)))==ID(indiv))),'omitnan');
+        conf_mean_wait_C(indiv,i)=mean(table_all.conf(pos_wait.(con(i,:))(table_all.ID(pos_wait.(con(i,:)))==ID(indiv))),'omitnan');
+   
+        RT_mean_go_C(indiv,i)=mean(table_all.reaction_time(pos_go.(con(i,:))(table_all.ID(pos_go.(con(i,:)))==ID(indiv))),'omitnan');
+        RT_mean_wait_C(indiv,i)=mean(table_all.reaction_time(pos_wait.(con(i,:))(table_all.ID(pos_wait.(con(i,:)))==ID(indiv))),'omitnan');
     end 
     
     SEM_Go_thr(i)=1.96*std(time_first_throttle_use(pos_go.(con(i,:))))/sqrt(length(pos_go.(con(i,:)))); 
     Mean_Go_thr(i) = mean(time_first_throttle_use(pos_go.(con(i,:)))); 
 end 
-
+for i = 1:4
+    mean_conf_ID_go(i)= mean(conf_mean_go_C(:,i), 'omitnan');
+    mean_conf_ID_wait(i)=mean(conf_mean_wait_C(:,i), 'omitnan'); 
+    CI_mean_conf_ID_go(i)=1.96*std(conf_mean_go_C(:,i), 'omitnan')/sqrt(length(ID));
+    CI_mean_conf_ID_wait(i)=1.96*std(conf_mean_wait_C(:,i), 'omitnan')/sqrt(length(ID));
+    
+    mean_RT_ID_go(i)=mean(RT_mean_go_C(:,i), 'omitnan'); 
+    mean_RT_ID_wait(i)=mean(RT_mean_wait_C(:,i), 'omitnan');
+    CI_mean_RT_ID_go(i)=1.96*std(RT_mean_go_C(:,i), 'omitnan')/sqrt(length(ID));
+    CI_mean_RT_ID_wait(i)=1.96*std(RT_mean_wait_C(:,i), 'omitnan')/sqrt(length(ID));
+end 
 pos_go_all = find(table_all.decision == 'Go');
 pos_wait_all = find(table_all.decision == 'Wait'); 
 
@@ -134,11 +147,12 @@ prs_thr_before_wait_RT = length(find(delta_time_thr_RT(pos_wait_all) <0))/length
 close all
 clc
 % Decision behaviour 
-glme_all_go_prs=fitglme(table_all, 'prs_decision ~ tta + dist + (1|ID)','CheckHessian', true);
+lme_all_go_prs=fitlme(table_all, 'prs_decision ~ tta + dist + (1|ID)','CheckHessian', true);
 [random_effect_inter_decision,~] = ...
-    function_lme_results ('Probability of go decision', glme_all_go_prs, pos, [], [Go_c_pr.c1,Go_c_pr.c2,Go_c_pr.c3,Go_c_pr.c4], zeros(1,4), ...
+    function_lme_results ('Probability of go decision', lme_all_go_prs, pos, [], [Go_c_pr.c1,Go_c_pr.c2,Go_c_pr.c3,Go_c_pr.c4], zeros(1,4), ...
     [],[]); 
 
+%%
 % Response time
 lme_all_rt = fitlme(table_all, 'reaction_time ~ tta *decision + dist *decision + (decision|ID)','CheckHessian', true);
 
@@ -307,8 +321,8 @@ delta_turn_thr = table_all.turn_time+table_all.reaction_time-table_all.first_thr
 [f_go,t_go]=ecdf(delta_turn_thr(pos_go_all)); 
 [f_wait,t_wait]=ecdf(delta_turn_thr(pos_wait_all));
 
-t_lim_go= [0,t_go(find(f_go>0.75,1))];
-t_lim_wait=[0,t_wait(find(f_wait>0.75,1))]; 
+t_lim_go= [0,t_go(find(f_go>0.75,1))]
+t_lim_wait=[0,t_wait(find(f_wait>0.75,1))]
 
 
 % Velocity (all condition)
@@ -363,20 +377,22 @@ subplot(1,2,1)
 hold on 
 errorbar(tta,[Go_c_pr.c1, Go_c_pr.c2],CI_95_GO(1:2),'.-k', 'LineWidth', 1, 'MarkerSize', 20)
 plot((ones(length(GoC2Pr),2).*tta)',[GoC1Pr,GoC2Pr]','.--','color', [.7 .7 .7],'MarkerSize',10)
-box off; xlim([5.3,6.7])
+errorbar(tta,[Go_c_pr.c1, Go_c_pr.c2],CI_95_GO(1:2),'.-k', 'LineWidth', 1, 'MarkerSize', 20)
+box off; xlim([5.3,6.7]); xticks([5.5, 6.5])
 ax = gca;             ax.FontSize = 12;
-title('Distance 70 meter')
+title('Distance 70m')
 legend('Average (CI 95%)','Individual', 'Location', 'northwest')
 legend boxoff
-xlabel('Time-to-arrival (TTA), s'); ylabel('Probability of go decision')
+xlabel('Time-to-arrival (TTA), s'); ylabel('Probability')
 subplot(1,2,2)
 hold on 
 errorbar(tta,[Go_c_pr.c3, Go_c_pr.c4],CI_95_GO(3:4),'.-k', 'LineWidth', 1, 'MarkerSize', 20)
 plot((ones(length(GoC2Pr),2).*tta)',[GoC3Pr,GoC4Pr]','.--','color', [.7 .7 .7],'MarkerSize',10)
+errorbar(tta,[Go_c_pr.c3, Go_c_pr.c4],CI_95_GO(3:4),'.-k', 'LineWidth', 1, 'MarkerSize', 20)
 ax = gca;             ax.FontSize = 12;
-box off; xlim([5.3,6.7])
-title('Distance 90 meter')
-xlabel('Time-to-arrival (TTA), s'); ylabel('Probability of go decision')
+box off; xlim([5.3,6.7]); xticks([5.5, 6.5])
+title('Distance 90m')
+xlabel('Time-to-arrival (TTA), s'); ylabel('Probability')
 
 
 
@@ -405,15 +421,17 @@ saveas(figure1_decision, fullfile(fname_dist, 'Decision behaviour average and in
 saveas(figure2_decision, fullfile(fname_dist, 'Dribution decision behaviour (conditions).jpg'))  
 
 %% Data - Response times (Figures)
+close all 
+
 for i = 1:2 
     if i == 1 
-        mean_RT_condition = Conf_mean_rt_go_exp; 
-        CI_RT = CI_mean_RT_mean_c_go; 
+        mean_RT_condition = mean_RT_ID_go; 
+        CI_RT = CI_mean_RT_ID_go; 
         RT_mean_C = RT_mean_go_C;
         txt = 'Go'; 
     elseif i == 2 
-        mean_RT_condition = Conf_mean_rt_wait_exp; 
-        CI_RT = CI_mean_RT_mean_c_wait; 
+        mean_RT_condition = mean_RT_ID_wait; 
+        CI_RT = CI_mean_RT_ID_wait; 
         RT_mean_C = RT_mean_wait_C;
         txt = 'Wait'; 
     end 
@@ -423,9 +441,11 @@ subplot(1,2,1)
 errorbar(tta,mean_RT_condition(1:2),CI_RT(1:2),'o-k', 'LineWidth', 1.7)
 hold on 
 plot((ones(length(RT_mean_C(:,2)),2).*tta)',RT_mean_C(:,[1,2])','.--','color', [.7 .7 .7],'LineWidth', 1.2,'MarkerSize',10)
+errorbar(tta,mean_RT_condition(1:2),CI_RT(1:2),'o-k', 'LineWidth', 1.7)
 ax = gca;             ax.FontSize = 12;
 xlim([5.3,6.7]); ylim([1,4]); box off
-title('Distance 70 meter')
+xticks([5.5, 6.5])
+title('Distance 70m')
 legend('Average (CI 95%)', 'Individual')
 legend boxoff
 xlabel('Time-to-arrival (TTA), s')
@@ -435,11 +455,16 @@ subplot(1,2,2)
 errorbar(tta,mean_RT_condition(3:4),CI_RT(3:4),'o-k', 'LineWidth', 1.7)
 hold on 
 plot((ones(length(RT_mean_C(:,4)),2).*tta)',RT_mean_C(:,[3,4])','.--','color', [.7 .7 .7],'LineWidth', 1.2,'MarkerSize',10)
+errorbar(tta,mean_RT_condition(3:4),CI_RT(3:4),'o-k', 'LineWidth', 1.7)
 ax = gca;             ax.FontSize = 12;
 xlim([5.3,6.7]); ylim([1,4]); box off
-title('Distance 90 meter')
+xticks([5.5, 6.5])
+title('Distance 90m')
 xlabel('Time-to-arrival (TTA), s'); ylabel('Response time (RT), s')
-sgtitle(txt)
+
+sgt = sgtitle(txt); 
+sgt.FontSize = 18;
+sgt.FontWeight = 'bold';
 
 saveas(observed_rt_fig, fullfile(fname_dist, ['Response time ',txt,'.jpg']))
 saveas(observed_rt_fig, fullfile(fname_dist, ['Response time ',txt,'.pdf']))
@@ -506,13 +531,13 @@ close all
 
 for i = 1:2 
     if i == 1 
-        mean_conf_condition = Conf_mean_c_go_exp; 
-        CI_conf = CI_mean_conf_go_exp; 
+        mean_conf_condition = mean_conf_ID_go; 
+        CI_conf = CI_mean_conf_ID_go; 
         conf_mean_C = conf_mean_go_C;
         txt = 'Go'; 
     elseif i == 2 
-        mean_conf_condition = Conf_mean_c_wait_exp; 
-        CI_conf = CI_mean_conf_wait_exp; 
+        mean_conf_condition = mean_RT_ID_wait; 
+        CI_conf = CI_mean_conf_ID_wait; 
         conf_mean_C = conf_mean_wait_C;
         txt = 'Wait'; 
     end 
@@ -522,9 +547,11 @@ for i = 1:2
     errorbar(tta,mean_conf_condition(1:2),CI_conf(1:2),'o-k', 'LineWidth', 1.7)
     hold on 
     plot((ones(length(conf_mean_C(:,2)),2).*tta)',conf_mean_C(:,[1,2])','.--','color', [.7 .7 .7],'LineWidth', 1.5,'MarkerSize',10)
+    errorbar(tta,mean_conf_condition(1:2),CI_conf(1:2),'o-k', 'LineWidth', 1.7)
     ax = gca;             ax.FontSize = 12;
     xlim([5.3,6.7]); ylim([1,5]); box off 
-    title('Distance 70 meter')
+    xticks([5.5, 6.5])
+    title('Distance 70m')
     legend('average (CI 95%)', 'individual', 'Location', 'Southwest')
     legend boxoff
     xlabel('Time-to-arrival (TTA), s')
@@ -534,11 +561,15 @@ for i = 1:2
     errorbar(tta,mean_conf_condition(3:4),CI_conf(3:4),'o-k', 'LineWidth', 1.7)
     hold on 
     plot((ones(length(conf_mean_C(:,4)),2).*tta)',conf_mean_C(:,[3,4])','.--','color', [.7 .7 .7],'LineWidth', 1.5,'MarkerSize',10)
-    ax = gca;             ax.FontSize = 12;
+    errorbar(tta,mean_conf_condition(3:4),CI_conf(3:4),'o-k', 'LineWidth', 1.7)
+        ax = gca;             ax.FontSize = 12;
     xlim([5.3,6.7]); ylim([1,5]); box off
-    title('Distance 90 meter')
+    xticks([5.5, 6.5])
+    title('Distance 90m')
     xlabel('Time-to-arrival (TTA), s'); ylabel('Confidence ')
-    sgtitle(txt)
+    sgt = sgtitle(txt); 
+    sgt.FontSize = 18;
+    sgt.FontWeight = 'bold';
     saveas(observed_conf_fig, fullfile(fname_dist, ['Confidence ',txt,'.jpg']))
     saveas(observed_conf_fig, fullfile(fname_dist, ['Confidence ',txt,'.pdf']))
 end  
