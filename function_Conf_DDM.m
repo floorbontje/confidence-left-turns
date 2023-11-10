@@ -174,7 +174,7 @@ RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
         xlabel('tta [sec]','FontSize', 14);         
         ylabel('Confidence','FontSize', 14) 
         title('Go','FontSize', 16)
-        ylim([1,5]); xlim([5.3;6.7])
+        ylim([1,5]); xlim([5.3;6.7]); xticks([5.5, 6.5])
         legend('model 70m', 'model 90m', 'data 70m', 'data 90m', 'Location', 'southeast', 'Fontsize', 12)
         
 
@@ -191,7 +191,7 @@ RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
         xlabel('tta [sec]','FontSize', 14)
         ylabel('Confidence','FontSize', 14) 
         title('Wait','FontSize', 16)
-        ylim([1,5]); xlim([5.3;6.7])
+        ylim([1,5]); xlim([5.3;6.7]); xticks([5.5, 6.5])
         dim = [.6 .1 .1 .1];
         sgtitle(txt, 'FontSize', 18) 
        
@@ -203,7 +203,7 @@ RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
         hold on; grid on 
         plot(tta, EV_mean_go(3:4), '.-r', 'MarkerSize',15)
         title ('Go')
-        xlim([5.3 6.7])
+        xlim([5.3 6.7]); xticks([5.5, 6.5])
         xlabel('Time-to-arrival (TTA), s')
         ylabel('V_c')
 
@@ -213,7 +213,7 @@ RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
         plot(tta, EV_mean_wait(3:4), '.-r', 'MarkerSize',15)
         title ('Wait')
         xlabel('Time-to-arrival (TTA), s')
-        xlim([5.3 6.7])
+        xlim([5.3 6.7]); xticks([5.5, 6.5])
         ylabel('V_c')
 
         subplot(2,2,3)
@@ -223,7 +223,7 @@ RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
         legend('70 m', '90m', 'Location', 'Southwest')
         title ('Go')
         xlabel('Time-to-arrival (TTA), s')
-        ylim([1,5]); xlim([5.3 6.7])
+        ylim([1,5]); xlim([5.3 6.7]); xticks([5.5, 6.5])
         ylabel('Confidence') 
 
         subplot(2,2,4)
@@ -233,7 +233,7 @@ RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
         title ('Wait decisions')
         xlabel('Time-to-arrival (TTA), s')
         ylabel('Confidence')
-        ylim([1,5]); xlim([5.3 6.7])
+        ylim([1,5]); xlim([5.3 6.7]); xticks([5.5, 6.5])
         sgtitle(txt)
 
 
