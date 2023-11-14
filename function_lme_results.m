@@ -60,7 +60,7 @@ if ~isempty(mean_wait_exp)
     end
     ylabel (txt)
     xlabel ('Time-to-arrival (TTA), s')
-    xlim([5.3 6.7])
+    xlim([5.3 6.7]);  xticks([5.5, 6.5])
     ylim([y_min,y_max])
 
     subplot(1,2,2)
@@ -76,7 +76,7 @@ if ~isempty(mean_wait_exp)
     title ('Wait'); box off; 
     ylabel (txt)
     xlabel ('Time-to-arrival (TTA), s')
-    xlim([5.3 6.7])
+    xlim([5.3 6.7]);  xticks([5.5, 6.5])
     ylim([y_min,y_max])
 else 
     hold on; box off
@@ -84,7 +84,7 @@ else
     plot([5.5;6.5], mean_go_exp(1:2),'.--','color', [.73 .73 1],'LineWidth',1.3,'MarkerSize', 20)
     plot([5.5;6.5], Conf_mean_c_go_fit(3:4),'.-r', 'LineWidth',1.3,'MarkerSize', 20)
     plot([5.5;6.5], mean_go_exp (3:4),'.--', 'color', [1 .73 .73],'LineWidth',1.3,'MarkerSize', 20)
-    xlim([5.3,6.7]); ylim([0,1])
+    xlim([5.3,6.7]); ylim([0,1]);  xticks([5.5, 6.5])
     xlabel('Time-to-arrival (TTA), s'); ylabel(txt)
     legend('Model 70 m', 'Data 70 m', 'Model 90m', 'Data 90m','Location', 'northwest')
     legend boxoff
