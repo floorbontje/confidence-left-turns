@@ -241,7 +241,7 @@ if plot_fig == 1
     title('Go', 'FontSize', 14)
     legend('model: 70m', 'model: 90m', 'data: 70m', 'data: 90m', 'Location', 'northwest','FontSize', 10)
     legend boxoff
-    xlim([5.3, 6.7]);     ylim([0, 100]) 
+    xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([0, 100]) 
     xlabel('Time-to-arrival (TTA), s','FontSize', 13)
     ylabel('Percentage of going','FontSize', 13)
     
@@ -254,7 +254,7 @@ if plot_fig == 1
     plot(tta, wait_pr_exp(3:4)*100, '.--','color', [1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20)
     ax = gca;             ax.FontSize = 12;
     title('Wait', 'FontSize', 14)
-    xlim([5.3, 6.7]);     ylim([0, 100])
+    xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([0, 100])
     xlabel('Time-to-arrival (TTA), s','FontSize', 13)
     ylabel('Percentage of waiting','FontSize', 13)
     saveas(figure0, fullfile(fname, [txt, ' decision behaviour modelled.jpg']))
@@ -273,7 +273,7 @@ if plot_fig == 1
     title('Go','FontSize', 14)
     legend('model: 70m', 'model: 90m', 'exp: 70m', 'exp: 90m', 'Location', 'northwest','FontSize', 10)
     legend boxoff
-    xlim([5.3, 6.7]);     ylim([1,3])
+    xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([1,3])
     xlabel('Time-to-arrival (TTA), s','FontSize', 13)
     ylabel('Response time (RT), s','FontSize', 13)
     
@@ -286,7 +286,7 @@ if plot_fig == 1
     errorbar(tta, mean_rt_exp_wait(3:4), CI_RT_wait_exp(3:4),'.--','color', [1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20)
     ax = gca;             ax.FontSize = 12;
     title('Wait','FontSize', 14)
-    xlim([5.3, 6.7]);     ylim([1,3])
+    xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([1,3])
     xlabel('Time-to-arrival (TTA), s','FontSize', 13)
     ylabel('Response time (RT), s','FontSize', 13)
     
