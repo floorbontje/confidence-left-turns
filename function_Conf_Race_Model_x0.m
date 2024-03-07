@@ -33,8 +33,8 @@ tta = [5.5,6.5];
 dist = [70,90];
 
 % Time 
-max_t = 7;                          % Maximum time
-delta_t   = 0.001;                  % time steps 
+max_t = 10;                          % Maximum time
+delta_t   = 0.0002;                  % time steps 
 max_inter = max_t/delta_t;          % total interations
 t = (0:delta_t:max_t-delta_t)';     % time vector
 
@@ -71,7 +71,9 @@ b_wait = b0_wait ./ (1 + exp(-k_wait * (generalized_gap_wait - theta_c_wait)));
 
     
 % noise: accumulation noise & sensory noise
-accu_noise = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
+accu_noise_go = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
+accu_noise_wait = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
+
 sen_noise  = 1 - (sen_noise_std*randn(max_inter, trials*length(tta)*length(dist)) + sen_noise_mean); %sensory noise 
 
 % Drift-rate 
@@ -98,8 +100,8 @@ for i = 1 : trials - 1
 end 
 
 for i = 1:max_inter
-        dx_go = sen_noise(i,:).*driftrate_go(i,:)*delta_t + accu_noise(i,:)*sqrt(delta_t); 
-        dx_wait = -(sen_noise(i,:).*driftrate_wait(i,:)*delta_t + accu_noise(i,:)*sqrt(delta_t)); 
+        dx_go = sen_noise(i,:).*driftrate_go(i,:)*delta_t + accu_noise_go(i,:)*sqrt(delta_t); 
+        dx_wait = -(sen_noise(i,:).*driftrate_wait(i,:)*delta_t + accu_noise_wait(i,:)*sqrt(delta_t)); 
         if i == 1
             evidence_go(i,:) = dx_go;
             evidence_wait(i,:) = dx_wait;
@@ -121,14 +123,15 @@ decision(RT_raw_go > RT_raw_wait) = -1;
 
 %% Confindence judgments 
 % Time moment of confidence judgment (CT)
-CT = nan(size(RT_raw_wait)); 
+CT = zeros(size(RT_raw_wait)); 
 CT(decision == 1)  = RT_raw_go(decision == 1) + conf_t; 
 CT(decision == -1) = RT_raw_wait(decision == -1) + conf_t; 
 
 % Position of CT
 int_CT = nan(size(RT_raw_wait));
+
 for i = 1:length(RT_raw_wait)
-     int_CT(i) = find(t > CT(i),1); 
+    int_CT(i) = find(t > CT(i),1); 
 end 
 
 % Evidence, decision boundaries: positive decision boundary both decisions
@@ -171,7 +174,7 @@ model_conf_0 = fitlm(table_output, 'Conf ~ Vc*dec');
 
 coeff_go = model_conf_0.Coefficients.Estimate([1,2]); 
 coeff_wait = model_conf_0.Coefficients.Estimate([1,2])+model_conf_0.Coefficients.Estimate([3,4]); 
-
+ 
 
 
 

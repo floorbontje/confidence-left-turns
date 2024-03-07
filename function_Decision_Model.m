@@ -74,8 +74,20 @@ upperboundary = b01 ./ (1 + exp(-k1 * (generalized_gap_go - theta_c1)));
 lowerboundary = b02 ./ (1 + exp(-k2 * (generalized_gap_wait - theta_c2))); 
     
 % noise 
-accu_noise  = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
-sen_noise   = 1 - (sen_noise_std*randn(max_inter, trials*length(tta)*length(dist)) + sen_noise_mean); %sensory noise 
+ sen_noise   = 1 - (sen_noise_std*randn(max_inter, trials*length(tta)*length(dist)) + sen_noise_mean); %sensory noise 
+
+
+if x(1:7) == x(8:14)
+    % disp("DDM")
+    accu_noise  = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
+    accu_noise_go = accu_noise; 
+    accu_noise_wait = accu_noise; 
+else 
+    % disp("Race Model")
+    accu_noise_go  = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
+    accu_noise_wait  = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
+
+end 
 
 % Drift-rate 
 driftrate_c_go      = alpha1.*(generalized_gap_go - theta_c1); 
@@ -103,8 +115,8 @@ end
 
 
 for i = 1:max_inter
-        dx_go = sen_noise(i,:).*driftrate_go(i,:)*delta_t + accu_noise(i,:)*sqrt(delta_t); 
-        dx_wait = -(sen_noise(i,:).*driftrate_wait(i,:)*delta_t + accu_noise(i,:)*sqrt(delta_t)); 
+        dx_go = sen_noise(i,:).*driftrate_go(i,:)*delta_t + accu_noise_go(i,:)*sqrt(delta_t); 
+        dx_wait = -(sen_noise(i,:).*driftrate_wait(i,:)*delta_t + accu_noise_wait(i,:)*sqrt(delta_t)); 
         if i == 1
             evidence_go(i,:)    = dx_go;
             evidence_wait(i,:)  = dx_wait;
@@ -137,6 +149,17 @@ for i = 1 :length(tta)*length(dist)
     pos_go.(con(i,:))   = find(decision == 1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i)); 
     pos_wait.(con(i,:)) = find(decision == -1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i));    
     
+    
+    pos_go_m = zeros(1,trials); 
+    pos_go_m(pos_go.(con(i,:)))=1; 
+    
+    pos_wait_m = zeros(1,trials); 
+    pos_wait_m(pos_wait.(con(i,:)))= 1; 
+    
+    CI_go_model(i) = 1.96 * std(pos_go_m)/sqrt(trials); 
+    CI_wait_model(i) = 1.96 * std(pos_wait_m)/sqrt(trials); 
+    
+    
     go_pr(i)    = length(pos_go.(con(i,:)))/trials;
     wait_pr(i)  = length(pos_wait.(con(i,:)))/trials;
     
@@ -154,9 +177,19 @@ data = readtable('.\Modelling\data model feeting\data_output_RT.csv');
 for i = 1: 4
     pos_go_exp.(con(i,:)) = find(data.num_decision ==1 & data.tta_condition == tta_con(i) & data.d_condition == dist_con(i)); 
     pos_wait_exp.(con(i,:)) = find(data.num_decision ==2 & data.tta_condition == tta_con(i) & data.d_condition == dist_con(i)); 
+    length_con = length(find(data.tta_condition == tta_con(i) & data.d_condition == dist_con(i))); 
     
-    go_pr_exp(i) = length(pos_go_exp.(con(i,:)))/length(find(data.tta_condition == tta_con(i) & data.d_condition == dist_con(i)));
-    wait_pr_exp(i)= length(pos_wait_exp.(con(i,:)))/length(find(data.tta_condition == tta_con(i) & data.d_condition == dist_con(i)));
+    go_pr_exp(i) = length(pos_go_exp.(con(i,:)))/length_con; 
+    wait_pr_exp(i)= length(pos_wait_exp.(con(i,:)))/length_con; 
+    
+    pos_go_con = zeros(1,length_con); 
+    pos_go_con(pos_go_exp.(con(i,:)))=1; 
+    
+    pos_wait_con = zeros(1,length_con); 
+    pos_wait_con(pos_wait_exp.(con(i,:)))= 1; 
+    
+    CI_go_exp(i) = 1.96 * std(pos_go_con)/sqrt(length_con); 
+    CI_wait_exp(i) = 1.96 * std(pos_wait_con)/sqrt(length_con); 
     
     mean_rt_exp_go(i) = mean(data.RT(pos_go_exp.(con(i,:)))); 
     mean_rt_exp_wait(i) = mean(data.RT(pos_wait_exp.(con(i,:)))); 
@@ -178,6 +211,7 @@ for i = 1:4
     RTgo_exp_inter.(con(i,:))   = interp1(Fgo_exp.(con(i,:)),RTgo_exp.(con(i,:)),F_inter);
     RTwait_exp_inter.(con(i,:)) = interp1(Fwait_exp.(con(i,:)),RTwait_exp.(con(i,:)),F_inter);
 end 
+
 %% Weighted Least Squares Fitting 
 % Quantiles and weights 
 q = [0.1, 0.3, 0.5, 0.7, 0.9]; 
@@ -232,14 +266,14 @@ if plot_fig == 1
     % Decision behaviour 
     figure0= figure; 
     subplot(1,2,1)
-    plot(tta, go_pr(1:2)*100, '.-b','LineWidth',1.3,'MarkerSize', 20)
+    errorbar(tta, go_pr(1:2)*100, CI_go_model(1:2)*100, '.-b','LineWidth',1.3,'MarkerSize', 20)
     hold on; box off 
-    plot(tta, go_pr(3:4)*100, '.-r','LineWidth',1.3,'MarkerSize', 20)
-    plot(tta, go_pr_exp(1:2)*100,'.--','color', [.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
-    plot(tta, go_pr_exp(3:4)*100, '.--','color', [1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20)
+    errorbar(tta, go_pr(3:4)*100, CI_go_model(3:4)*100,'.-r','LineWidth',1.3,'MarkerSize', 20)
+    errorbar(tta, go_pr_exp(1:2)*100, CI_go_exp(1:2)*100,'.--','color', [.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
+    errorbar(tta, go_pr_exp(3:4)*100, CI_go_exp(3:4)*100,'.--','color', [1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20)
     ax = gca;             ax.FontSize = 12;
     title('Go', 'FontSize', 14)
-    legend('model: 70m', 'model: 90m', 'data: 70m', 'data: 90m', 'Location', 'northwest','FontSize', 10)
+    legend('model: 70m', 'model: 90m', 'exp: 70m', 'exp: 90m', 'Location', 'northwest','FontSize', 10)
     legend boxoff
     xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([0, 100]) 
     xlabel('Time-to-arrival (TTA), s','FontSize', 13)
@@ -247,11 +281,11 @@ if plot_fig == 1
     
     
     subplot(1,2,2)
-    plot(tta, wait_pr(1:2)*100, '.-b','LineWidth',1.3,'MarkerSize', 20)
+    errorbar(tta, wait_pr(1:2)*100,CI_wait_model(1:2)*100, '.-b','LineWidth',1.3,'MarkerSize', 20)
     hold on; box off
-    plot(tta, wait_pr(3:4)*100, '.-r','LineWidth',1.3,'MarkerSize', 20)
-    plot(tta, wait_pr_exp(1:2)*100, '.--','color', [.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
-    plot(tta, wait_pr_exp(3:4)*100, '.--','color', [1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20)
+    errorbar(tta, wait_pr(3:4)*100, CI_wait_model(3:4)*100, '.-r','LineWidth',1.3,'MarkerSize', 20)
+    errorbar(tta, wait_pr_exp(1:2)*100, CI_wait_exp(1:2)*100,'.--','color', [.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
+    errorbar(tta, wait_pr_exp(3:4)*100, CI_wait_exp(3:4)*100,'.--','color', [1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20)
     ax = gca;             ax.FontSize = 12;
     title('Wait', 'FontSize', 14)
     xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([0, 100])
@@ -273,7 +307,7 @@ if plot_fig == 1
     title('Go','FontSize', 14)
     legend('model: 70m', 'model: 90m', 'exp: 70m', 'exp: 90m', 'Location', 'northwest','FontSize', 10)
     legend boxoff
-    xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([1,3])
+    xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([1,3.5])
     xlabel('Time-to-arrival (TTA), s','FontSize', 13)
     ylabel('Response time (RT), s','FontSize', 13)
     
@@ -286,7 +320,7 @@ if plot_fig == 1
     errorbar(tta, mean_rt_exp_wait(3:4), CI_RT_wait_exp(3:4),'.--','color', [1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20)
     ax = gca;             ax.FontSize = 12;
     title('Wait','FontSize', 14)
-    xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([1,3])
+    xlim([5.3, 6.7]);  xticks([5.5, 6.5]);    ylim([1,3.5])
     xlabel('Time-to-arrival (TTA), s','FontSize', 13)
     ylabel('Response time (RT), s','FontSize', 13)
     
@@ -295,51 +329,91 @@ if plot_fig == 1
  
     
     %Illustration of model 
-    max_bound = max([upper_boundary_trials(1,1:4), low_boundary_trials(1,1:4)]); 
-   
+    max_bound = 0.5+max(upper_boundary_trials(1,1:4)); 
+    txt2 = 'tau 0';
+    for conf = 1:2 
+    if decision(3) == 1 
+        stop_pos = find(t==RT_raw_go(3)); 
+        conf_pos = find(t>RT_raw_go(3)+1,1);
+        
+    else 
+        stop_pos = find(t==RT_raw_wait(3)); 
+        conf_pos = find(t>RT_raw_wait(3)+1,1);
+    end 
+    
     if abs(alpha1-alpha2) > 0  
         figure2=figure;  
-        plot(t ,evidence_go(:,3),'-','color',[0.3 0.2 0.9],'LineWidth',1.3)
         hold on
-        plot(t ,evidence_wait(:,3),'-','color',[0.32 0.7 0.9],'LineWidth',1.3)
-        plot(t ,upper_boundary_trials(:,3),'--k','LineWidth',1.3)
+        plot(t(1:stop_pos), evidence_go(1:stop_pos,3),'-','color',[0.3 0.2 0.9],'LineWidth',1.3)
+        plot(t(1:stop_pos), -evidence_wait(1:stop_pos,3),'-','color',[0.32 0.7 0.9],'LineWidth',1.3)
+        plot(t,upper_boundary_trials(:,3),'--k','LineWidth',1.3)
+        plot(t,-low_boundary_trials(:,3),':k','LineWidth',1.3)
         if decision(3) == 1 
-            plot(RT_raw_go(3) ,upper_boundary_trials(find(t==RT_raw_go(3),1),3),'.r','MarkerSize', 20,'LineWidth',1.3)
+            plot(RT_raw_go(3),upper_boundary_trials(stop_pos,3),'.r','MarkerSize', 20,'LineWidth',1.3)
         else 
-            plot(RT_raw_wait(3) ,upper_boundary_trials(find(t==RT_raw_wait(3),1),3),'.r','MarkerSize', 20,'LineWidth',1.3)
+            plot(RT_raw_wait(3),-low_boundary_trials(stop_pos,3),'.r','MarkerSize', 20,'LineWidth',1.3)
         end
         plot(t, zeros(size(t)),'-k')
-        ax = gca;             ax.FontSize = 12;
-        legend({'Accumulator: Go', 'Accumulator: Wait', 'Boundary', 'Decision'},'Location','East', 'FontSize', 10)
-        legend boxoff;                  box off 
-        ylabel('Evidence (EV)','FontSize', 13);       
-        xlabel('time, s','FontSize', 13)
-        ylim([-1,max_bound]);           xlim([0,1])  
-        saveas(figure2, fullfile(fname, [txt, ' illustration model race.jpg']))
-        saveas(figure2, fullfile(fname, [txt, ' illustration model race.pdf']))
-    else 
-
-        figure2=figure;  
-        plot(t, evidence_go(:,2),'-','color',[0.6350 0.0780 0.1840],'LineWidth',1.3)
-        hold on 
-        plot(t, upper_boundary_trials(:,2),':k','LineWidth',1.3)
-        plot(t, -upper_boundary_trials(:,2),'--k','LineWidth',1.3)
-        if decision(2) == 1 
-            plot(RT_raw_go(2) ,upper_boundary_trials(t==RT_raw_go(2),2),'.r','MarkerSize', 20,'LineWidth',1.3)
+        
+        if conf == 2
+            plot(t(1:conf_pos), evidence_go(1:conf_pos,3),':','color',[0.3 0.2 0.9],'LineWidth',1.3)
+            plot(t(1:conf_pos), -evidence_wait(1:conf_pos,3),':','color',[0.32 0.7 0.9],'LineWidth',1.3)
+            title('Race Model, CT = RT + \tau')
+            txt2 = 'tau CT';
         else 
-            plot(RT_raw_wait(2) ,-upper_boundary_trials(t==RT_raw_wait(2),2),'.r','MarkerSize', 20,'LineWidth',1.3)
+            title('Race Model, CT = RT')
+        end 
+        text(t(stop_pos), evidence_go(stop_pos,3)+0.3, 'go','color',[0.3 0.2 0.9], 'FontSize', 14)
+        text(t(stop_pos), -evidence_wait(stop_pos,3)-0.3, 'wait','color',[0.32 0.7 0.9], 'FontSize', 14)
+        text(0.2,0.85, 'go', 'FontSize', 14)
+        text(0.2,-0.85, 'wait', 'FontSize', 14)
+        ax = gca;             ax.FontSize = 14;             
+        box off 
+        ylabel('Evidence (EV)','FontSize', 16);       
+        xlabel('time, s','FontSize', 16)
+        ylim([-1,max_bound]);           xlim([0,t(conf_pos)+0.2])  
+        saveas(figure2, fullfile(fname, [txt, txt2, ' illustration model race.jpg']))
+        saveas(figure2, fullfile(fname, [txt, txt2, ' illustration model race.pdf']))
+    else 
+       
+        figure2=figure;  
+        if decision(3) == 1 
+            plot(t(1:stop_pos), evidence_go(1:stop_pos,3),'-','color',[0.6350 0.0780 0.1840],'LineWidth',1.3)
+        else 
+            plot(t(1:stop_pos), -evidence_wait(1:stop_pos,3),'-','color',[0.6350 0.0780 0.1840],'LineWidth',1.3)
+        end 
+        hold on 
+        plot(t, upper_boundary_trials(:,3),'--k','LineWidth',1.3)
+        plot(t, -low_boundary_trials(:,3),':k','LineWidth',1.3)
+        if decision(3) == 1 
+            plot(RT_raw_go(3),upper_boundary_trials(stop_pos,3),'.r','MarkerSize', 20,'LineWidth',1.3)
+        else 
+            plot(RT_raw_wait(3),-low_boundary_trials(stop_pos,3),'.r','MarkerSize', 20,'LineWidth',1.3)
         end
         plot(t, zeros(size(t)), '-k')
-        ax = gca;             ax.FontSize = 12;
-        legend('Accumulator','Boundary: Go', 'Boundary: Wait','Decison','FontSize', 10)
-        legend boxoff;                  box off
-        ylim([-max_bound,max_bound]);   xlim([0,1])
-        ylabel('Evidence (EV)','FontSize', 13);        
-        xlabel('time, s','FontSize', 13)
-        saveas(figure2, fullfile(fname, [txt, ' illustration model DDM.jpg']))
-        saveas(figure2, fullfile(fname, [txt, ' illustration model DDM.pdf']))
+        
+        if conf == 2 
+            if decision(3) == 1 
+            plot(t(1:conf_pos), evidence_go(1:conf_pos,3),':','color',[0.6350 0.0780 0.1840],'LineWidth',1.3)
+            else 
+            plot(t(1:conf_pos), -evidence_wait(1:conf_pos,3),':','color',[0.6350 0.0780 0.1840],'LineWidth',1.3)
+            end 
+            title('DDM, CT = RT + \tau')
+            txt2 = 'tau CT';
+        else
+            title('DDM, CT = RT')
+        end 
+        ax = gca;             ax.FontSize = 14;
+        text(0.2,0.95, 'go', 'FontSize', 14)
+        text(0.2, -0.95, 'wait', 'FontSize', 14)                 
+        box off
+        ylim([-max_bound,max_bound]);   xlim([0,t(conf_pos)+0.2])
+        ylabel('Evidence (EV)','FontSize', 16);        
+        xlabel('time, s','FontSize', 16)
+        saveas(figure2, fullfile(fname, [txt, txt2, ' illustration model DDM.jpg']))
+        saveas(figure2, fullfile(fname, [txt, txt2, ' illustration model DDM.pdf']))
     end   
-    
+    end 
 end 
 
 

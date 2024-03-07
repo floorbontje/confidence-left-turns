@@ -25,7 +25,8 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
     load([data_loc,'Confidence_mean_RT.mat']) 
 
     %% Initialise
-
+    RMSE = nan(1);
+    
     % Model parameters 
     alpha_go = p(1); beta_go=p(2); b0_go=p(3); k_go = p(4);  
     mu_ND_go= p(5); sigma_ND_go =p(6); theta_c_go = p(7);
@@ -89,7 +90,8 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
 
 
     % noise: accumulation noise & sensory noise
-    accu_noise = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
+    accu_noise_go = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
+    accu_noise_wait = accu_noise_std*randn(max_inter, (trials*length(tta)*length(dist))) + accu_noise_mean;  %accumulation noise  
     sen_noise  = 1 - (sen_noise_std*randn(max_inter, trials*length(tta)*length(dist)) + sen_noise_mean); %sensory noise 
 
     % Drift-rate 
@@ -116,8 +118,8 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
     end 
 
     for i = 1:max_inter
-            dx_go = sen_noise(i,:).*driftrate_go(i,:)*delta_t + accu_noise(i,:)*sqrt(delta_t); 
-            dx_wait = -(sen_noise(i,:).*driftrate_wait(i,:)*delta_t + accu_noise(i,:)*sqrt(delta_t)); 
+            dx_go = sen_noise(i,:).*driftrate_go(i,:)*delta_t + accu_noise_go(i,:)*sqrt(delta_t); 
+            dx_wait = -(sen_noise(i,:).*driftrate_wait(i,:)*delta_t + accu_noise_wait(i,:)*sqrt(delta_t)); 
             if i == 1
                 evidence_go(i,:) = dx_go;
                 evidence_wait(i,:) = dx_wait;
@@ -139,174 +141,179 @@ function  [RMSE]  = function_Conf_Race_Model(trials, p, conf_t, plot_fig, coeff_
 
     %% Confindence judgments 
     % Time moment of confidence judgment (CT)
-    CT = nan(size(RT_raw_wait)); 
+    CT = zeros(size(RT_raw_wait)); 
     CT(decision == 1)  = RT_raw_go(decision == 1) + conf_t; 
     CT(decision == -1) = RT_raw_wait(decision == -1) + conf_t; 
 
-    % Position of CT
-    int_CT = nan(size(RT_raw_wait));
-    for i = 1:length(RT_raw_wait)
-         int_CT(i) = find(t > CT(i),1); 
-    end 
-
-    % Evidence, decision boundaries: positive decision boundary both decisions
-    DV_dec = nan(1,4*trials);  DV_alt = DV_dec; 
-    b_dec = nan(1,4*trials);   b_alt = b_dec ; 
-
-    for i = find(decision == 1)
-        DV_dec(i) = evidence_go(int_CT(i),i); 
-        DV_alt(i) = evidence_wait(int_CT(i),i); 
-        b_dec(i)  = go_boundary_trials(int_CT(i),i); 
-        b_alt(i)  = wait_boundary_trials(int_CT(i),i); 
-    end 
-
-    for i = find(decision == -1)
-        DV_dec(i) = evidence_wait(int_CT(i),i); 
-        DV_alt(i) = evidence_go(int_CT(i),i); 
-        b_dec(i)  = wait_boundary_trials(int_CT(i),i); 
-        b_alt(i)  = go_boundary_trials(int_CT(i),i); 
-    end 
-
-
-    for i = 1 :length(tta)*length(dist)
-        pos_go = find(decision == 1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i)); 
-        pos_wait =find(decision == -1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i));    
-
-        DV_mean_loss_go(i)   = mean(-DV_alt(pos_go));
-        DV_mean_loss_wait(i) = mean(-DV_alt(pos_wait)); 
-    end 
-
-
-%% Model predictions 
-
-    Vc= -DV_alt; 
-
-    for i = 1: length(decision)
-        if decision(i) == 1 
-            conf(i) = coeff_go(1)+(Vc(i))*coeff_go(2);
-        else 
-            conf(i) = coeff_wait(1)+(Vc(i))*coeff_wait(2);
-        end 
-    end 
     
-    % Confidence boundaries (min/max values)
-    conf(conf<1)=1; 
-    conf(conf>5)=5; 
+        % Position of CT
+        int_CT = nan(size(RT_raw_wait));
+        for i = 1:length(RT_raw_wait)
+             int_CT(i) = find(t > CT(i),1); 
+        end 
 
-    % Mean confidence jdugments 
-    for i = 1 :length(tta)*length(dist)
-        pos_go_c = find(decision == 1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i)); 
-        pos_wait_c =find(decision == -1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i));    
-        Conf_go(i) = mean(conf(pos_go_c)); 
-        Conf_wait(i) = mean(conf(pos_wait_c)); 
-        CI_conf_go(i) = 1.96*std(conf(pos_go_c))/sqrt(length(pos_go_c)); 
-        CI_conf_wait(i) = 1.96*std(conf(pos_wait_c))/sqrt(length(pos_wait_c)); 
-    end
+        % Evidence, decision boundaries: positive decision boundary both decisions
+        DV_dec = nan(1,4*trials);  DV_alt = DV_dec; 
+        b_dec = nan(1,4*trials);   b_alt = b_dec ; 
 
-    conf_model = [Conf_go'; Conf_wait']; 
-    conf_measured = [Conf_mean_c_go';Conf_mean_c_wait']; 
-    RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
+        for i = find(decision == 1)
+            DV_dec(i) = evidence_go(int_CT(i),i); 
+            DV_alt(i) = evidence_wait(int_CT(i),i); 
+            b_dec(i)  = go_boundary_trials(int_CT(i),i); 
+            b_alt(i)  = wait_boundary_trials(int_CT(i),i); 
+        end 
 
-
-
-
-    %% Figures 
-    if  plot_fig == 1 
-        linear_regression_fig=figure; 
-        subplot(1,2,1) 
-        errorbar(tta, Conf_go(1:2),CI_conf_go(1:2), '.-b', 'LineWidth',1.3,'MarkerSize', 20)
-        hold on; box off
-        errorbar(tta, Conf_go(3:4),CI_conf_go(3:4), '.-r', 'LineWidth',1.3,'MarkerSize', 20)
-        errorbar(tta, Conf_mean_c_go(1:2), CI_conf_mean_c_go(1:2), '.--', 'color', [.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
-        errorbar(tta, Conf_mean_c_go(3:4), CI_conf_mean_c_go(3:4),'.--', 'color',[1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20) 
-        text(5.5,4.7,['c_{0,Go}: ', num2str(coeff_go(1))], 'FontSize', 12)
-        text(5.5,4.4,['c_{go}   : ', num2str(coeff_go(2))], 'FontSize', 12)
-        ax = gca;          ax.FontSize = 12;
-        xlabel('tta [sec]','FontSize', 14);         
-        ylabel('Confidence','FontSize', 14) 
-        title('Go','FontSize', 16)
-        ylim([1,5]); xlim([5.3;6.7]); xticks([5.5, 6.5])
-        legend('model 70m', 'model 90m', 'data 70m', 'data 90m', 'Location', 'southeast', 'Fontsize', 12)
-        
-
-        subplot(1,2,2) 
-        errorbar(tta, Conf_wait(1:2),CI_conf_wait(1:2), '.-b', 'LineWidth',1.3,'MarkerSize', 20)
-        hold on; box off
-        errorbar(tta, Conf_wait(3:4),CI_conf_wait(3:4), '.-r', 'LineWidth',1.3,'MarkerSize', 20)
-        errorbar(tta, Conf_mean_c_wait(1:2),CI_conf_mean_c_wait(1:2), '.--', 'color',[.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
-        errorbar(tta, Conf_mean_c_wait(3:4),CI_conf_mean_c_wait(3:4), '.--', 'color',[1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20) 
-        ax = gca;         ax.FontSize = 12;
-        text(5.5,4.7,['c_{0,wait}: ', num2str(coeff_wait(1))], 'FontSize', 12)
-        text(5.5,4.4,['c_{wait}   : ', num2str(coeff_wait(2))],'FontSize', 12)
-        xlabel('tta [sec]','FontSize', 14)
-        ylabel('Confidence','FontSize', 14) 
-        title('Wait','FontSize', 16)
-        ylim([1,5]); xlim([5.3;6.7]); xticks([5.5, 6.5])
-        dim = [.6 .1 .1 .1];
-        sgtitle(txt, 'FontSize', 18) 
-       
+        for i = find(decision == -1)
+            DV_dec(i) = evidence_wait(int_CT(i),i); 
+            DV_alt(i) = evidence_go(int_CT(i),i); 
+            b_dec(i)  = wait_boundary_trials(int_CT(i),i); 
+            b_alt(i)  = go_boundary_trials(int_CT(i),i); 
+        end 
 
 
-        figure_Vc = figure; 
-        subplot(2,2,1)
-        plot(tta, DV_mean_loss_go(1:2),'.-b', 'MarkerSize',15)
-        hold on; grid on 
-        plot(tta, DV_mean_loss_go(3:4), '.-r', 'MarkerSize',15)
-        title ('Go')
-        xlim([5.3 6.7]); xticks([5.5, 6.5])
-        xlabel('Time-to-arrival (TTA), s')
-        ylabel('V_c')
+        for i = 1 :length(tta)*length(dist)
+            pos_go = find(decision == 1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i)); 
+            pos_wait =find(decision == -1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i));    
 
-        subplot(2,2,2)
-        plot(tta, DV_mean_loss_wait(1:2),'.-b', 'MarkerSize',15)
-        hold on; grid on 
-        plot(tta, DV_mean_loss_wait(3:4), '.-r', 'MarkerSize',15)
-        title ('Wait')
-        xlabel('Time-to-arrival (TTA), s')
-        xlim([5.3 6.7]); xticks([5.5, 6.5])
-        ylabel('V_c')
+            DV_mean_loss_go(i)   = mean(-DV_alt(pos_go));
+            DV_mean_loss_wait(i) = mean(-DV_alt(pos_wait)); 
+        end 
 
-        subplot(2,2,3)
-        plot(tta,Conf_mean_c_go(1:2),'.-b', 'MarkerSize',15)
-        hold on; grid on
-        plot(tta,Conf_mean_c_go(3:4),'.-r', 'MarkerSize',15)
-        legend('70 m', '90m', 'Location', 'Southwest')
-        title ('Go')
-        xlabel('Time-to-arrival (TTA), s')
-        ylim([1,5]); xlim([5.3 6.7]); xticks([5.5, 6.5])
-        ylabel('Confidence') 
 
-        subplot(2,2,4)
-        plot(tta,Conf_mean_c_wait(1:2),'.-b', 'MarkerSize',15)
-        hold on; grid on
-        plot(tta,Conf_mean_c_wait(3:4),'.-r', 'MarkerSize',15)
-        title ('Wait decisions')
-        xlabel('Time-to-arrival (TTA), s')
-        ylabel('Confidence')
-        ylim([1,5]); xlim([5.3 6.7]); xticks([5.5, 6.5])
-        sgtitle(txt)
+    %% Model predictions 
+
+        Vc= -DV_alt; 
+
+        for i = 1: length(decision)
+            if decision(i) == 1 
+                conf(i) = coeff_go(1)+(Vc(i))*coeff_go(2);
+            else 
+                conf(i) = coeff_wait(1)+(Vc(i))*coeff_wait(2);
+            end 
+        end 
+
+        % Confidence boundaries (min/max values)
+        conf(conf<1)=1; 
+        conf(conf>5)=5; 
+
+        % Mean confidence jdugments 
+        for i = 1 :length(tta)*length(dist)
+            pos_go_c = find(decision == 1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i)); 
+            pos_wait_c =find(decision == -1 & tta_con_trials == tta_con(i) & dist_con_trials == dist_con(i));    
+            Conf_go(i) = mean(conf(pos_go_c)); 
+            Conf_wait(i) = mean(conf(pos_wait_c)); 
+            CI_conf_go(i) = 1.96*std(conf(pos_go_c))/sqrt(length(pos_go_c)); 
+            CI_conf_wait(i) = 1.96*std(conf(pos_wait_c))/sqrt(length(pos_wait_c)); 
+        end
+
+        conf_model = [Conf_go'; Conf_wait']; 
+        conf_measured = [Conf_mean_c_go';Conf_mean_c_wait']; 
+        RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
 
 
 
 
-        %% Save figures 
-        fname = ['.\Modelling\Confidence\', model];
-        saveas(linear_regression_fig, fullfile(fname,['linear regression model ' , model, '.jpg']))
-        saveas(figure_Vc, fullfile(fname,['Raw evidence and conf ', model, '.jpg']))
-        saveas(linear_regression_fig, fullfile(fname,['linear regression model ' , model, '.pdf']))
-        saveas(figure_Vc, fullfile(fname,['Raw evidence and conf ', model, '.pdf']))
-        
-        RT = size(RT_raw_go); 
-        RT(decision == -1) = RT_raw_wait(decision == -1) +t_non_decision_wait(decision == -1); 
-        RT(decision == 1) = RT_raw_go (decision == 1) + t_non_decision_go(decision ==1); 
+        %% Figures 
+        if  plot_fig == 1 
+            linear_regression_fig=figure; 
+            subplot(1,2,1) 
+            errorbar(tta, Conf_go(1:2),CI_conf_go(1:2), '.-b', 'LineWidth',1.3,'MarkerSize', 20)
+            hold on; box off
+            errorbar(tta, Conf_go(3:4),CI_conf_go(3:4), '.-r', 'LineWidth',1.3,'MarkerSize', 20)
+            errorbar(tta, Conf_mean_c_go(1:2), CI_conf_mean_c_go(1:2), '.--', 'color', [.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
+            errorbar(tta, Conf_mean_c_go(3:4), CI_conf_mean_c_go(3:4),'.--', 'color',[1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20) 
+            text(5.5,4.7,['c_{0}^{go}: ', num2str(coeff_go(1))], 'FontSize', 12)
+            text(5.5,4.4,['c_{1}^{go}: ', num2str(coeff_go(2))], 'FontSize', 12)
+            ax = gca;          ax.FontSize = 12;
+            xlabel('tta [sec]','FontSize', 14);         
+            ylabel('Confidence','FontSize', 14) 
+            title('Go','FontSize', 16)
+            ylim([1,5]); xlim([5.3;6.7]); xticks([5.5, 6.5])
+            legend('model 70m', 'model 90m', 'data 70m', 'data 90m', 'Location', 'southeast', 'Fontsize', 12)
 
-        is_go_decision=categorical(decision,[1 -1],{'True' 'False'});
 
-        data_output= table(RT',is_go_decision',tta_con_trials', dist_con_trials',Vc', conf',...
-            'VariableNames',{'RT','is_go_decision','tta_condition','d_condition','Vc', 'confidence'});  
+            subplot(1,2,2) 
+            errorbar(tta, Conf_wait(1:2),CI_conf_wait(1:2), '.-b', 'LineWidth',1.3,'MarkerSize', 20)
+            hold on; box off
+            errorbar(tta, Conf_wait(3:4),CI_conf_wait(3:4), '.-r', 'LineWidth',1.3,'MarkerSize', 20)
+            errorbar(tta, Conf_mean_c_wait(1:2),CI_conf_mean_c_wait(1:2), '.--', 'color',[.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
+            errorbar(tta, Conf_mean_c_wait(3:4),CI_conf_mean_c_wait(3:4), '.--', 'color',[1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20) 
+            ax = gca;         ax.FontSize = 12;
+            text(5.5,4.7,['c_{0}^{wait}: ', num2str(coeff_wait(1))], 'FontSize', 12)
+            text(5.5,4.4,['c_{1}^{wait}: ', num2str(coeff_wait(2))],'FontSize', 12)
+            xlabel('tta [sec]','FontSize', 14)
+            ylabel('Confidence','FontSize', 14) 
+            title('Wait','FontSize', 16)
+            ylim([1,5]); xlim([5.3;6.7]); xticks([5.5, 6.5])
+            dim = [.6 .1 .1 .1];
+            sgtitle(txt, 'FontSize', 18) 
 
-        save_name = [fname, '\data_output_',model,'.csv']; 
-        writetable(data_output, save_name)
+
+
+            figure_Vc = figure; 
+            subplot(2,2,1)
+            plot(tta, DV_mean_loss_go(1:2),'.-b', 'MarkerSize',15)
+            hold on; grid on 
+            plot(tta, DV_mean_loss_go(3:4), '.-r', 'MarkerSize',15)
+            title ('Go')
+            xlim([5.3 6.7]); xticks([5.5, 6.5])
+            xlabel('Time-to-arrival (TTA), s')
+            ylabel('V_c')
+
+            subplot(2,2,2)
+            plot(tta, DV_mean_loss_wait(1:2),'.-b', 'MarkerSize',15)
+            hold on; grid on 
+            plot(tta, DV_mean_loss_wait(3:4), '.-r', 'MarkerSize',15)
+            title ('Wait')
+            xlabel('Time-to-arrival (TTA), s')
+            xlim([5.3 6.7]); xticks([5.5, 6.5])
+            ylabel('V_c')
+
+            subplot(2,2,3)
+            plot(tta,Conf_mean_c_go(1:2),'.-b', 'MarkerSize',15)
+            hold on; grid on
+            plot(tta,Conf_mean_c_go(3:4),'.-r', 'MarkerSize',15)
+            legend('70 m', '90m', 'Location', 'Southwest')
+            title ('Go')
+            xlabel('Time-to-arrival (TTA), s')
+            ylim([1,5]); xlim([5.3 6.7]); xticks([5.5, 6.5])
+            ylabel('Confidence') 
+
+            subplot(2,2,4)
+            plot(tta,Conf_mean_c_wait(1:2),'.-b', 'MarkerSize',15)
+            hold on; grid on
+            plot(tta,Conf_mean_c_wait(3:4),'.-r', 'MarkerSize',15)
+            title ('Wait decisions')
+            xlabel('Time-to-arrival (TTA), s')
+            ylabel('Confidence')
+            ylim([1,5]); xlim([5.3 6.7]); xticks([5.5, 6.5])
+            sgtitle(txt)
+
+
+
+
+            %% Save figures 
+            fname = ['.\Modelling\Confidence\', model];
+            saveas(linear_regression_fig, fullfile(fname,['linear regression model ' , model, '.jpg']))
+            saveas(figure_Vc, fullfile(fname,['Raw evidence and conf ', model, '.jpg']))
+            saveas(linear_regression_fig, fullfile(fname,['linear regression model ' , model, '.pdf']))
+            saveas(figure_Vc, fullfile(fname,['Raw evidence and conf ', model, '.pdf']))
+
+            RT = size(RT_raw_go); 
+            RT(decision == -1) = RT_raw_wait(decision == -1) +t_non_decision_wait(decision == -1); 
+            RT(decision == 1) = RT_raw_go (decision == 1) + t_non_decision_go(decision ==1); 
+
+            is_go_decision=categorical(decision,[1 -1],{'True' 'False'});
+
+            data_output= table(RT',is_go_decision',tta_con_trials', dist_con_trials',Vc', conf',...
+                'VariableNames',{'RT','is_go_decision','tta_condition','d_condition','Vc', 'confidence'});  
+
+            save_name = [fname, '\data_output_',model,'.csv']; 
+            writetable(data_output, save_name)
+
+
+         
+    
     end 
  
 

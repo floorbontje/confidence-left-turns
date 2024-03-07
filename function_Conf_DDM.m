@@ -167,8 +167,8 @@ RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
         errorbar(tta, Conf_go(3:4),CI_conf_go(3:4), '.-r', 'LineWidth',1.3,'MarkerSize', 20)
         errorbar(tta, Conf_mean_c_go(1:2), CI_conf_mean_c_go(1:2), '.--', 'color', [.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
         errorbar(tta, Conf_mean_c_go(3:4), CI_conf_mean_c_go(3:4),'.--', 'color',[1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20) 
-        text(5.5,4.7,['c_{0,Go}: ', num2str(coeff_go(1))], 'FontSize', 12)
-        text(5.5,4.4,['c_{go}   : ', num2str(coeff_go(2))], 'FontSize', 12)
+        text(5.5,4.7,['c_{0}^{go}: ', num2str(coeff_go(1))], 'FontSize', 12)
+        text(5.5,4.4,['c_{1}^{go}: ', num2str(coeff_go(2))], 'FontSize', 12)
         ax = gca; 
         ax.FontSize = 12;
         xlabel('tta [sec]','FontSize', 14);         
@@ -184,8 +184,8 @@ RMSE = sqrt(sum((conf_model - conf_measured).^2)/length(conf_model));
         errorbar(tta, Conf_wait(3:4),CI_conf_wait(3:4), '.-r', 'LineWidth',1.3,'MarkerSize', 20)
         errorbar(tta, Conf_mean_c_wait(1:2),CI_conf_mean_c_wait(1:2), '.--', 'color',[.73 .73 1], 'LineWidth',1.3,'MarkerSize', 20)
         errorbar(tta, Conf_mean_c_wait(3:4),CI_conf_mean_c_wait(3:4), '.--', 'color',[1 .73 .73], 'LineWidth',1.3,'MarkerSize', 20) 
-        text(5.5,4.7,['c_{0,wait}: ', num2str(coeff_wait(1))], 'FontSize', 12)
-        text(5.5,4.4,['c_{wait}   : ', num2str(coeff_wait(2))],'FontSize', 12)
+        text(5.5,4.7,['c_{0}^{wait}: ', num2str(coeff_wait(1))], 'FontSize', 12)
+        text(5.5,4.4,['c_{1}^{wait}: ', num2str(coeff_wait(2))],'FontSize', 12)
         ax = gca; 
         ax.FontSize = 12;
         xlabel('tta [sec]','FontSize', 14)

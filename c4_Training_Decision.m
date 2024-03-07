@@ -21,7 +21,7 @@ clc
 % Initial parameters: 
 % parameters found for the initial drift-diffusion decision model 
 parameters_decision_RT_WLSVincent = ...
-    readtable('.\Modelling\Parameters Initial\subj_all_RT_WLSVincent.csv');
+    readtable('.\Modelling\Parameter Initial\subj_all_RT_WLSVincent.csv');
 pos = find(parameters_decision_RT_WLSVincent.loss == min(parameters_decision_RT_WLSVincent.loss));
 parameters = parameters_decision_RT_WLSVincent(pos,:);
 
@@ -61,29 +61,33 @@ x_opt = x0;
 txt = '_int'; 
 
 for tr = 1:2
-     if tr == 1 
-        %based on initial training 
-        load ([file_loc,'2DV_decision_x0.mat'])
-        load ([file_loc,'2DV_decision_para_alpha_int.mat']) 
-        load ([file_loc,'2DV_decision_para_alpha_b0_int.mat'])
-        load ([file_loc,'2DV_decision_para_alpha_theta_int.mat'])
-        load ([file_loc,'2DV_decision_para_all_int.mat'])
-         
-    else 
-        % based on x0
-        load ([file_loc,'2DV_decision_para_alpha_x0.mat']) 
-        load ([file_loc,'2DV_decision_para_alpha_b0_x0.mat'])
-        load ([file_loc,'2DV_decision_para_alpha_theta_x0.mat'])
-        load ([file_loc,'2DV_decision_para_all_x0.mat'])
-     end 
+%      if tr == 1 
+%         %based on initial training 
+%         load ([file_loc,'2DV_decision_x0.mat'])
+%         load ([file_loc,'2DV_decision_para_alpha_int.mat']) 
+%         load ([file_loc,'2DV_decision_para_alpha_b0_int.mat'])
+%         load ([file_loc,'2DV_decision_para_alpha_b0_k_int.mat'])
+% %         load ([file_loc,'2DV_decision_para_alpha_b0_k_theta_int.mat'])
+% %         load ([file_loc,'2DV_decision_para_alpha_theta_int.mat'])
+%         load ([file_loc,'2DV_decision_para_all_int.mat'])
+%          
+%     else 
+%         % based on x0
+%         load ([file_loc,'2DV_decision_para_alpha_x0.mat']) 
+%         load ([file_loc,'2DV_decision_para_alpha_b0_x0.mat'])
+% %         load ([file_loc,'2DV_decision_para_alpha_b0_k_x0.mat'])
+% %         load ([file_loc,'2DV_decision_para_alpha_b0_k_theta_x0.mat'])
+% %         load ([file_loc,'2DV_decision_para_alpha_theta_x0.mat'])
+%         load ([file_loc,'2DV_decision_para_all_x0.mat'])
+%      end 
      
-for kind_of_decision = 1:4 
+for kind_of_decision = 5:6 
       
     if kind_of_decision == 1 
         fun = @(x)function_Decision_Model(trials, [x(1,1:8),x(1,2:7)], 0, 'Alpha');
         
         for i = 1 :10 
-            x_alpha (i,:) = fmincon(fun,x_opt(1:8), [],[],[],[],lb0(1:8),ub0(1:8)); 
+            x_alpha_test (i,:) = fmincon(fun,x_opt(1:8), [],[],[],[],lb0(1:8),ub0(1:8)); 
             loss_alpha(i) = function_Decision_Model(trials, [x_alpha(i,1:8),x_alpha(i,2:7)],0, 'Alpha'); 
         end
         pos_min_alpha = find(loss_alpha == min(loss_alpha));
@@ -121,20 +125,42 @@ for kind_of_decision = 1:4
         end
         pos_min_all= find(loss_all == min(loss_all));
         save([file_loc,'2DV_decision_para_all', txt, '.mat'],'x_all','loss_all', 'pos_min_all')
-
+    
+    elseif kind_of_decision == 5
+        fun = @(x)function_Decision_Model(trials, [x(1,1:8),x(1,2),x(1,9:10),x(1,5:7)], 0, 'Alpha boundaries');
+        
+        for i = 1 :10 
+            x_alpha_bound (i,:) = fmincon(fun,[x_opt(1:8),x_opt(10:11)], [],[],[],[],[lb0(1:8);lb0(10:11)],[ub0(1:8);ub0(10:11)]); 
+            loss_alpha_bound(i) = function_Decision_Model(trials,[x_alpha_bound(i,1:8),x_alpha_bound(i,2),x_alpha_bound(i,9:10),x_alpha_bound(i,5:7)],0, 'Alpha_bound'); 
+        end
+        pos_min_alpha_bound= find(loss_alpha_bound == min(loss_alpha_bound));
+        save([file_loc,'2DV_decision_para_alpha_b0_k', txt, '.mat'],'x_alpha_bound','loss_alpha_bound', 'pos_min_alpha_bound')
+    
+        
+    elseif kind_of_decision == 6
+          fun = @(x)function_Decision_Model(trials, [x(1,1:8),x(1,2),x(1,9:10),x(1,5:6),x(1,11)], 0, 'Alpha theta bound');
+        
+        for i = 1 :10 
+            x_alpha_theta_bound (i,:) = fmincon(fun,[x_opt(1:8),x_opt(10:11),x_opt(14)], [],[],[],[],[lb0(1:8);lb0(10:11);lb0(14)],[ub0(1:8);ub0(10:11);ub0(14)]); 
+            loss_alpha_theta_bound(i) = function_Decision_Model(trials, [x_alpha_theta_bound(i,1:8),x_alpha_theta_bound(i,2),x_alpha_theta_bound(i,9:10),x_alpha_theta_bound(i,5:6),x_alpha_theta_bound(i,11)],0, 'Alpha theta bound'); 
+        end
+        pos_min_alpha_theta_bound = find(loss_alpha_theta_bound == min(loss_alpha_theta_bound));
+        save([file_loc,'2DV_decision_para_alpha_b0_k_theta', txt, '.mat'],'x_alpha_theta_bound','loss_alpha_theta_bound', 'pos_min_alpha_theta_bound')
+      
     end 
 end 
 
     if tr == 1
-    fun = @(x)function_Decision_Model(trials, [x(1,1:7),x(1,1:7)], 0, 'x0');
-    for i = 1 :10 
-        x_0 (i,:) = fmincon(fun,x0(1:7), [],[],[],[],lb0(1:7),ub0(1:7)); 
-        loss_0(i) = function_Decision_Model(trials, [x_0(i,1:7),x_0(i,1:7)],0, 'x0'); 
-    end
-    pos_min_0 = find(loss_0 == min(loss_0));
-    save([file_loc,'2DV_decision_x0.mat'],'x_0','loss_0', 'pos_min_0')
-    x_opt = [x_0(pos_min_0,:),x_0(pos_min_0,:)]; 
-    txt = '_x0'; 
+    %     %DDMfunction_Decision_Model
+    %     fun = @(x)function_Decision_Model(trials, [x(1,1:7),x(1,1:7)], 0, 'x0');
+    %     for i = 1 :10 
+    %         x_0 (i,:) = fmincon(fun,x0(1:7), [],[],[],[],lb0(1:7),ub0(1:7)); 
+    %         loss_0(i) = (trials, [x_0(i,1:7),x_0(i,1:7)],0, 'x0'); 
+    %     end
+    %     pos_min_0 = find(loss_0 == min(loss_0));
+    %     save([file_loc,'2DV_decision_x0.mat'],'x_0','loss_0', 'pos_min_0')
+    %     x_opt = [x_0(pos_min_0,:),x_0(pos_min_0,:)]; 
+        txt = '_x0'; 
     end 
 end 
 
@@ -151,6 +177,9 @@ for tr = 1:2
         load ([file_loc,'2DV_decision_para_alpha_b0_int.mat'])
         load ([file_loc,'2DV_decision_para_alpha_theta_int.mat'])
         load ([file_loc,'2DV_decision_para_all_int.mat'])
+        load ([file_loc,'2DV_decision_para_alpha_b0_k_int.mat'])
+        load ([file_loc,'2DV_decision_para_alpha_b0_k_theta_int.mat'])
+        
         txt = '(int)';
     else 
         % based on x0
@@ -158,11 +187,13 @@ for tr = 1:2
         load ([file_loc,'2DV_decision_para_alpha_b0_x0.mat'])
         load ([file_loc,'2DV_decision_para_alpha_theta_x0.mat'])
         load ([file_loc,'2DV_decision_para_all_x0.mat'])
+        load ([file_loc,'2DV_decision_para_alpha_b0_k_x0.mat'])
+        load ([file_loc,'2DV_decision_para_alpha_b0_k_theta_x0.mat'])
         txt = '(x0)';
       end 
      
 
-    for i = 1:10 
+    for i = 1:20 
         if tr == 1 
             WLS_int(i)  = function_Decision_Model(trials, x0,plot_fig, 'intital input'); 
             WLS_x0(i)   = function_Decision_Model(trials, [x_0(pos_min_0,1:7),x_0(pos_min_0,1:7)],plot_fig, 'x0'); 
@@ -172,22 +203,34 @@ for tr = 1:2
                [x_alpha_b0(pos_min_alpha_b0,1:8),x_alpha_b0(pos_min_alpha_b0,2),x_alpha_b0(pos_min_alpha_b0,9),x_alpha_b0(pos_min_alpha_b0,4:7)],plot_fig, ['Alpha&b0', txt]); 
             WLS_x_alpha_theta(i) = function_Decision_Model(trials, [x_alpha_theta(pos_min_alpha_theta,1:8),...
                 x_alpha_theta(pos_min_alpha_theta,2:6),x_alpha_theta(pos_min_alpha_theta,9)],plot_fig, ['Alpha&theta', txt]);
+           
+            
+            
+            x = x_alpha_bound(pos_min_alpha_bound,:); 
+            WLS_x_alpha_b0_k(i) = function_Decision_Model(trials, [x(1,1:8),x(1,2),x(1,9:10),x(1,5:7)],plot_fig, ['Alpha&bound', txt]);
+            
+            x = x_alpha_theta_bound(pos_min_alpha_theta_bound,:); 
+            WLS_x_alpha_b0_k_theta(i) = function_Decision_Model(trials, [x(1,1:8),x(1,2),x(1,9:10),x(1,5:6),x(1,11)],plot_fig, ['Alpha&theta&bound', txt]);
+                    
+            
             WLS_x_all(i) = function_Decision_Model(trials, x_all(pos_min_all,:),plot_fig, ['All', txt]);
     end 
 
     WLS = table(mean(WLS_int), 1.96*std(WLS_int)/10, mean(WLS_x0), 1.96* std(WLS_x0)/10, mean(WLS_x_alpha), 1.95*std(WLS_x_alpha)/10,...
     mean(WLS_x_alpha_b0), 1.96*std(WLS_x_alpha_b0)/10, mean(WLS_x_alpha_theta), 1.96*std(WLS_x_alpha_theta)/10,...
+    mean(WLS_x_alpha_b0_k), 1.96*std(WLS_x_alpha_b0_k)/10, mean(WLS_x_alpha_b0_k_theta), 1.96*std(WLS_x_alpha_b0_k_theta)/10,...
     mean(WLS_x_all), 1.96*std(WLS_x_all)/10, 'VariableNames',...
     {'WLS int', 'WLS int CI', 'WLS mean x0', 'WLS CI x0', ...
     'WLS mean alpha',  'WLS CI alpha',   'WLS mean alpha b0',  'WLS CI alpha b0',... 
-    'WLS mean alpha theta',  'WLS CI alpha theta', 'WLS mean all',    'WLS CI all'});
+    'WLS mean alpha theta',  'WLS CI alpha theta', 'WLS mean alpha bound', 'WLS CI alpha bound', ...
+    'WLS mean alpha bound theta', 'WLS CI alpha bound theta', 'WLS mean all',    'WLS CI all'});
 
     if tr == 1 
         WLS_intitial = WLS 
-        writetable(WLS, [file_loc, '\WLS_best_fit_int.csv'])
+        writetable(WLS, [file_loc, 'WLS_best_fit_int.csv'])
     else 
-        WLS_x0 = WLS
-        writetable(WLS, [file_loc, '\WLS_best_fit_x0.csv'])
+        WLS_x0_total = WLS
+        writetable(WLS, [file_loc, 'WLS_best_fit_x0.csv'])
     end 
 
 end 

@@ -15,8 +15,9 @@ else
 end 
 
 %% Measures experiment 
+load('.\Data analysis\general data analysis\Confidence_mean_RT.mat')
 data_loc = '.\Data anlysis\general data analysis\'; 
-load([data_loc,'Confidence_mean_RT.mat']) 
+% load([data_loc,'Confidence_mean_RT.mat']) 
 
 %% Initialise
 % Model parameters 
