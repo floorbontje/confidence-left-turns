@@ -1,10 +1,10 @@
 import numpy as np
 from scipy import interpolate, optimize
-import pyddm
+import ddm
 import pandas as pd
 
-class LossWLS(pyddm.LossFunction):
-    name = "Weighted least squares as described in Ratcliff & Tuerlinckx 2002: only go decisions"
+class LossWLS(ddm.LossFunction):
+    name = "Weighted least squares as described in Ratcliff & Tuerlinckx 2002"
     rt_quantiles = [0.1, 0.3, 0.5, 0.7, 0.9]
     rt_q_weights = [2, 2, 1, 1, 0.5]
 
